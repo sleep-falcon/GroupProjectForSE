@@ -40,4 +40,13 @@ public enum UserTypeEnum {
         }
         return null;
     }
+
+    public static Integer getType(String name){
+        UserTypeEnum[] enums = UserTypeEnum.values();
+        for(UserTypeEnum user : enums){
+            if(user.name == name)
+                return user.type;
+        }
+        return null;
+    }
 }

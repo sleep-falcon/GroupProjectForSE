@@ -3,6 +3,9 @@ package dao;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.lang.reflect.Member;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.sun.org.apache.bcel.internal.generic.NEW;
 import dao.allDo.*;
@@ -113,7 +116,7 @@ public class DataOperation {
             // init the reader
             SAXReader reader = new SAXReader();
             // get the Document
-            File xmlFile = new File("data/members.xml");
+            File xmlFile = new File(UserTypeEnum.getPos(UserTypeEnum.getType(userType)));
 
             Document doc = reader.read(xmlFile);
 
@@ -155,16 +158,74 @@ public class DataOperation {
         }
     }
 
-    public static void main(String[] args) {
-        DataOperation test = new DataOperation();
-        AdminDO testMember = new AdminDO();
-        testMember.setId("test001");
-        test.addUser(testMember);
-        testMember = (AdminDO) findSingerNode("admin", "id","test001");
-        if(testMember == null){
-            System.out.println("null!");
-            return;
+    /**
+     * search a singer user by condition
+     *
+     * @param userType the type of the user you want to search
+     * @param searchCondition the name of the condition you want to search
+     * @param searchContent the content of the condition you want to search
+     * @return the correct userDOs
+     */
+    public static List<UserDO> findNodes(String userType, String searchCondition, String searchContent){
+        try {
+            // init the reader
+            SAXReader reader = new SAXReader();
+
+            int type = UserTypeEnum.getType(userType);
+
+            // get the Document
+            File xmlFile = new File(UserTypeEnum.getPos(type));
+
+            Document doc = reader.read(xmlFile);
+
+            String xpath = "//" + userType + "[@" + searchCondition + "='" + searchContent + "']";
+
+            //search
+            List<Element> iniResult = doc.selectNodes(xpath);
+            List<UserDO> finalResult = new ArrayList<>();
+
+
+            for(Element user : iniResult){
+                UserDO temp = null;
+                switch(type){
+                    case 0:
+                        temp = new MemberDO();
+                        ((MemberDO) temp).setType(user.attributeValue("type"));
+                        ((MemberDO) temp).setEmail(user.attributeValue("email"));
+                        break;
+                    case 1:
+                        temp = new TrainerDO();
+                        break;
+                    case 2:
+                        temp = new AdminDO();
+                        break;
+                    case 3:
+                        temp = new PromoterDO();
+                        break;
+                }
+                temp.setId(user.attributeValue("id"));
+                temp.setPassword(user.attributeValue("password"));
+                temp.setName(user.attributeValue("name"));
+                temp.setPhoneNumber(user.attributeValue("phoneNumber"));
+                temp.setInfo(user.attributeValue("info"));
+                finalResult.add(temp);
+            }
+            return finalResult;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        System.out.println(testMember.getId());
+    }
+
+    public static void main(String[] args) {
+        MemberDO m1 = new MemberDO();
+        MemberDO m2 = new MemberDO();
+        m1.setId("Test001");
+        m2.setId("Test002");
+        m1.setType("1");
+        m2.setType("1");
+        addUser(m1);
+        addUser(m2);
+        List result = findNodes("member", "type", "1");
     }
 }
